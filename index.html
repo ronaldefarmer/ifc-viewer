@@ -1,34 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Simple IFC Viewer</title>
   <style>
-    html, body { margin: 0; height: 100%; overflow: hidden; }
-    #viewer { width: 100%; height: 100%; }
+    body { margin: 0; }
+    canvas { width: 100%; height: 100%; display: block; }
   </style>
 </head>
 <body>
-  <div id="viewer"></div>
-
-  <!-- Three.js r149 (compatible with old UMD viewer) -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
-  <!-- WebIFC 0.0.70 -->
-  <script src="https://cdn.jsdelivr.net/npm/web-ifc@0.0.70/dist/web-ifc.js"></script>
-  <!-- WebIFC Viewer UMD 0.0.67 -->
-  <script src="https://cdn.jsdelivr.net/npm/web-ifc-viewer@0.0.67/dist/web-ifc-viewer.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.129/IFCLoader.js"></script>
 
   <script>
-    // UMD version exposes IfcViewerAPI on window
-    const container = document.getElementById('viewer');
-    const viewer = new window.IfcViewerAPI({ container });
+    // Basic scene
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-    viewer.axes.setAxes();
-    viewer.grid.setGrid();
+    // Controls
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    camera.position.set(10, 10, 10);
+    controls.update();
 
-    viewer.IFC.loadIfcUrl('./test.ifc')
-      .then(() => console.log('IFC loaded successfully'))
-      .catch(err => console.error('Failed to load IFC:', err));
+    // Light
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(10, 10, 10);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x404040));
+
+    // IFC Loader
+    const ifcLoader = new IFCLoader();
+    ifcLoader.ifcManager.setWasmPath("https://cdn.jsdelivr.net/npm/web-ifc@0.0.46/");
+    ifcLoader.load("test.ifc", (ifcModel) => {
+      scene.add(ifcModel);
+      console.log("IFC loaded successfully");
+    }, undefined, (err) => {
+      console.error("Failed to load IFC:", err);
+    });
+
+    // Animate
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Resize handler
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
   </script>
 </body>
 </html>
