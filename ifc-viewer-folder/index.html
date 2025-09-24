@@ -11,17 +11,22 @@
 <body>
   <div id="viewer"></div>
 
-  <script type="module">
-    import { IfcViewerAPI } from 'https://unpkg.com/web-ifc-viewer@latest/dist/index.js';
+  <!-- Three.js is required for IFC.js -->
+  <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+  <script src="https://unpkg.com/web-ifc@0.0.77/dist/web-ifc.js"></script>
+  <script src="https://unpkg.com/web-ifc-viewer@latest/dist/index.umd.js"></script>
 
+  <script>
+    // Create the viewer inside the container
     const container = document.getElementById('viewer');
-    const viewer = new IfcViewerAPI({ container });
+    const viewer = new window.WebIFCViewer.IfcViewerAPI({ container });
 
     viewer.axes.setAxes();
     viewer.grid.setGrid();
 
-    // Load the IFC model
-    viewer.IFC.loadIfcUrl('./test.ifc')
+    // Load your IFC model
+    const ifcUrl = './test.ifc';  // Make sure your IFC file is in the same folder
+    viewer.IFC.loadIfcUrl(ifcUrl)
       .then(() => console.log('IFC loaded successfully'))
       .catch(err => console.error('Failed to load IFC:', err));
   </script>
