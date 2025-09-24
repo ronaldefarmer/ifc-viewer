@@ -13,8 +13,8 @@
 
   <!-- Three.js is required for IFC.js -->
   <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
-  <script src="https://unpkg.com/web-ifc@0.0.77/dist/web-ifc.js"></script>
-  <script src="https://unpkg.com/web-ifc-viewer@latest/dist/index.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/web-ifc@0.0.70/dist/web-ifc.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/web-ifc-viewer@1.0.218/dist/web-ifc-viewer.min.js"></script>
 
   <script>
     // Create the viewer inside the container
@@ -25,7 +25,7 @@
     viewer.grid.setGrid();
 
     // Load your IFC model
-    const ifcUrl = './test.ifc';  // Make sure your IFC file is in the same folder
+    const ifcUrl = './test.ifc';  // Ensure your IFC file is in the same folder
     viewer.IFC.loadIfcUrl(ifcUrl)
       .then(() => console.log('IFC loaded successfully'))
       .catch(err => console.error('Failed to load IFC:', err));
