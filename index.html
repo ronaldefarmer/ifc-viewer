@@ -1,30 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>IFC Viewer</title>
-<style>
-html, body { margin: 0; height: 100%; }
-#viewer { width: 100%; height: 100%; }
-</style>
+  <meta charset="UTF-8">
+  <title>IFC Viewer</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; }
+    #viewer { width: 100%; height: 100%; }
+  </style>
 </head>
 <body>
-<div id="viewer"></div>
+  <div id="viewer"></div>
 
+  <!-- Include Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <!-- Include WebIFC -->
+  <script src="https://cdn.jsdelivr.net/npm/web-ifc@0.0.77/dist/web-ifc.js"></script>
+  <!-- Include WebIFC Viewer -->
+  <script src="https://cdn.jsdelivr.net/npm/web-ifc-viewer@1.0.218/dist/web-ifc-viewer.min.js"></script>
 
-<script type="module">
-import { IfcViewerAPI } from 'https://unpkg.com/web-ifc-viewer@latest/dist/index.js';
+  <script>
+    const container = document.getElementById('viewer');
+    const viewer = new window.WebIFCViewer.IfcViewerAPI({ container });
 
+    viewer.axes.setAxes();
+    viewer.grid.setGrid();
 
-const container = document.getElementById('viewer');
-const viewer = new IfcViewerAPI({ container });
-viewer.axes.setAxes();
-viewer.grid.setGrid();
-
-
-// Load your IFC file
-const url = './test.ifc'; // make sure this filename matches your IFC file
-viewer.IFC.loadIfcUrl(url);
-</script>
+    const ifcUrl = './test.ifc';  // Ensure your IFC file is in the same folder
+    viewer.IFC.loadIfcUrl(ifcUrl)
+      .then(() => console.log('IFC loaded successfully'))
+      .catch(err => console.error('Failed to load IFC:', err));
+  </script>
 </body>
 </html>
