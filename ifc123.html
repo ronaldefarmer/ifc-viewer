@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IFC Viewer</title>
+  <style>
+    html,body { height:100%; margin:0; }
+    #viewer { width:100%; height:100vh; display:block; background:#eaeaea; }
+    #ui {
+      position: absolute; left: 12px; top: 12px;
+      background: rgba(255,255,255,0.9); padding:8px; border-radius:6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-family:system-ui,Segoe UI,Roboto;
+      z-index: 10;
+    }
+    #urlInput { width:380px; max-width:40vw; }
+    button { margin-left:6px; }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <input id="urlInput" placeholder="Paste an absolute URL to an .ifc file (or leave blank to upload)">
+    <button id="loadBtn">Load URL</button>
+    <input id="fileInput" type="file" accept=".ifc" />
+    <div id="msg" style="margin-top:6px;font-size:12px;color:#333"></div>
+  </div>
+
+  <div id="viewer"></div>
+
+  <script type="module">
+    // Import web-ifc-viewer from CDN (jsdelivr). Version pinned for reproducibility.
+    import { IfcViewerAPI } from 'https://cdn.jsdelivr.net/npm/web-ifc-viewer@1.0.218/dist/ifc-viewer-api.js';
+
+    const container = document.getElementById('viewer');
+    const viewer = new IfcViewerAPI({ container, backgroundColor: 0xffffff });
+
+    // small helpers: grid / axes
+    viewer.axes.setAxes();
+    viewer.grid.setGrid({ size: 10, divisions: 10 });
+
+    // Try to set the WASM path used by the web-ifc parser.
+    // If you host web-ifc.wasm yourself, change this path to point to it (or copy the file into the same folder).
+    try {
+      // point to a public web-ifc package on jsDelivr (compatible versions may change)
+      // If this fails in some environments, download web-ifc's wasm and serve it from the same origin and update path.
+      await viewer.IFC.setWasmPath('https://cdn.jsdelivr.net/npm/web-ifc@0.0.58/');
+    } catch (e) {
+      console.warn('Could not set remote WASM path. If loading fails, host web-ifc.wasm locally and set setWasmPath to that folder.', e);
+    }
+
+    // Utilities to load model from URL or File
+    async function loadIfcFromUrl(url) {
+      setMessage('Loading from URL...');
+      try {
+        const model = await viewer.IFC.loadIfcUrl(url);
+        // render a shadow for clarity (if supported)
+        try { viewer.shadowDropper.renderShadow(model.modelID); } catch(e){}
+        viewer.context.fitToFrame();
+        setMessage('Loaded.');
+      } catch (err) {
+        console.error(err);
+        setMessage('Error loading model: ' + (err.message || err));
+      }
+    }
+
+    async function loadIfcFromFile(file) {
+      setMessage('Reading file...');
+      const buffer = await file.arrayBuffer();
+      setMessage('Parsing model... (may take a few seconds for large files)');
+      try {
+        const model = await viewer.IFC.loadIfc(buffer);
+        try { viewer.shadowDropper.renderShadow(model.modelID); } catch(e){}
+        viewer.context.fitToFrame();
+        setMessage('Loaded from upload.');
+      } catch (err) {
+        console.error(err);
+        setMessage('Error parsing file: ' + (err.message || err));
+      }
+    }
+
+    // UI wiring
+    const urlInput = document.getElementById('urlInput');
+    const loadBtn = document.getElementById('loadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const msg = document.getElementById('msg');
+
+    function setMessage(text) { msg.textContent = text; }
+
+    loadBtn.addEventListener('click', () => {
+      const url = urlInput.value.trim();
+      if (!url) return setMessage('Enter an absolute URL to an IFC file or use file upload.');
+      loadIfcFromUrl(url);
+    });
+
+    fileInput.addEventListener('change', (ev) => {
+      const f = ev.target.files && ev.target.files[0];
+      if (!f) return;
+      loadIfcFromFile(f);
+    });
+
+    // If the page was opened with ?file=URL, auto-load it
+    const params = new URLSearchParams(location.search);
+    const fileParam = params.get('file');
+    if (fileParam) {
+      urlInput.value = fileParam;
+      loadIfcFromUrl(fileParam);
+    }
+
+    // drag & drop support
+    window.addEventListener('dragover', e => e.preventDefault());
+    window.addEventListener('drop', e => {
+      e.preventDefault();
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f && f.name.toLowerCase().endsWith('.ifc')) loadIfcFromFile(f);
+    });
+  </script>
+</body>
+</html>
